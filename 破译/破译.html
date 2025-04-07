@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密码破译</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Chinese_Soviet_Republic.jpg/1200px-Chinese_Soviet_Republic.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .hint {
+            cursor: pointer;
+            color: #d97706;
+        }
+
+        .hint-content {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="flex justify-center items-center min-h-screen">
+    <div class="bg-white bg-opacity-80 p-8 rounded-lg shadow-md w-1/2 md:w-2/3 lg:w-3/4">
+        <h1 class="text-2xl font-bold text-center mb-4">红军密码破译游戏</h1>
+        <p class="text-gray-700 mb-4">成功破译它，为红军的战略部署提供关键情报！</p>
+        <p class="text-gray-700 mb-4 whitespace-pre-line">截获的密电：
+"Nqpi ftxkg cpf gpektegnogpv."</p>
+        <p class="hint" onclick="toggleHint(1)">提示 1：点击查看 <i class="fa-solid fa-caret-down"></i></p>
+        <p class="hint-content" id="hint1">此次密电采用移位加密，可关注字母移动规律。</p>
+        <p class="hint" onclick="toggleHint(2)">提示 2：点击查看 <i class="fa-solid fa-caret-down"></i></p>
+        <p class="hint-content" id="hint2">移位值不大，可从小范围尝试。</p>
+        <p class="hint" onclick="toggleHint(3)">提示 3：点击查看 <i class="fa-solid fa-caret-down"></i></p>
+        <p class="hint-content" id="hint3">移位值为 2。</p>
+        <label for="keyword" class="block text-gray-700 font-bold mb-2">请输入解密后的内容：</label>
+        <input type="text" id="keyword" class="w-full p-2 border border-gray-300 rounded mb-4">
+        <button onclick="decrypt()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">解密</button>
+        <div id="result" class="mt-4"></div>
+    </div>
+    <script>
+        function toggleHint(hintNumber) {
+            const hintContent = document.getElementById(`hint${hintNumber}`);
+            const hint = document.querySelector(`.hint:nth-of-type(${hintNumber}) i`);
+            if (hintContent.style.display === "none") {
+                hintContent.style.display = "block";
+                hint.classList.remove('fa-caret-down');
+                hint.classList.add('fa-caret-up');
+            } else {
+                hintContent.style.display = "none";
+                hint.classList.remove('fa-caret-up');
+                hint.classList.add('fa-caret-down');
+            }
+        }
+
+        function decrypt() {
+            const correctAnswer = "Long drive and encirclement.";
+            const userAnswer = document.getElementById('keyword').value;
+            if (userAnswer!== correctAnswer) {
+                document.getElementById('result').innerHTML = '<p class="text-red-500">解密错误，请重新尝试！</p>';
+                return;
+            }
+            document.getElementById('result').innerHTML = `<p class="text-green-500">解密成功！你获取到国民党此次采用长驱直入、分进合击的围剿策略重要情报！</p>`;
+        }
+    </script>
+</body>
+
+</html>    
