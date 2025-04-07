@@ -1,0 +1,41 @@
+/* 全局样式 */
+body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background-color: black;
+    color: white;
+    text-align: center;
+}
+
+/* 屏幕样式 */
+.screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* 覆盖整个视口高度 */
+    background-color: rgba(0, 0, 0, 0.8); /* 半透明背景 */
+    position: fixed; /* 固定定位，覆盖整个页面 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000; /* 确保在最上层 */
+}
+
+.hidden {
+    display: none; /* 隐藏元素 */
+}
+
+h1 {
+    font-size: 3rem; /* 设置字体大小 */
+    color: white; /* 设置字体颜色为白色 */
+    text-align: center;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1; /* 确保画布在 endScreen 之下 */
+}

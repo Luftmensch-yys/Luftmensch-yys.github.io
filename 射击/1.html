@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第一人称射击小游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 开始界面 -->
+    <div id="startScreen" class="screen">
+        <h1>突然遇到鬼子！</h1>
+        <button id="startButton">开始游戏</button>
+    </div>
+
+    <!-- 游戏主界面 -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 结束界面 -->
+    <div id="endScreen" class="screen hidden">
+        <h1>你已逃出鬼子的包围！</h1>
+    </div>
+
+    <!-- 音效 -->
+    <audio id="attackSound">
+        <source src="枪声_Freesound.mp3" type="audio/mpeg">
+        您的浏览器不支持音频播放。
+    </audio>
+    <!-- 空白处的音效 -->
+    <audio id="backgroundClickSound">
+      <source src="枪声_Freesound.mp3" type="audio/mpeg">
+      您的浏览器不支持音频播放。
+  </audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
