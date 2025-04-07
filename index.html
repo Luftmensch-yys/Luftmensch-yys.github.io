@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>挺身而出 - QTE战斗</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-image: url('https://example.com/old_paper_texture.jpg');
+            background-size: cover;
+        }
+        
+        #game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        #scene-description {
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 18px;
+        }
+        
+        #qte-prompt {
+            font-size: 24px;
+            margin: 20px 0;
+            min-height: 36px;
+            color: #ffcc00;
+        }
+        
+        #qte-timer {
+            width: 100%;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        #qte-timer-bar {
+            height: 100%;
+            width: 100%;
+            background-color: #4CAF50;
+            transition: width 0.1s linear;
+        }
+        
+        #qte-keys {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .key {
+            width: 60px;
+            height: 60px;
+            background-color: #333;
+            border: 2px solid #555;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            transition: all 0.1s;
+        }
+        
+        .key.active {
+            background-color: #ffcc00;
+            color: #000;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #ffcc00;
+        }
+        
+        #result-message {
+            font-size: 20px;
+            margin: 20px 0;
+            min-height: 60px;
+            color: #ff5555;
+        }
+        
+        #health-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .health-bar {
+            width: 45%;
+            height: 30px;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        #player-health {
+            background-color: #4CAF50;
+            height: 100%;
+            width: 100%;
+        }
+        
+        #enemy-health {
+            background-color: #f44336;
+            height: 100%;
+            width: 100%;
+        }
+        
+        .health-label {
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        #continue-btn {
+            display: none;
+            margin: 20px auto;
+            padding: 12px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #continue-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>挺身而出</h1>
+        
+        <div id="scene-description">
+            你看到白军士兵正在欺压村民，愤怒之下你决定挺身而出！<br>
+            快速按下提示的按键来反击敌人！
+        </div>
+        
+        <div id="health-container">
+            <div style="width: 45%;">
+                <div class="health-label">你的生命值</div>
+                <div class="health-bar">
+                    <div id="player-health"></div>
+                </div>
+            </div>
+            <div style="width: 45%;">
+                <div class="health-label">敌人生命值</div>
+                <div class="health-bar">
+                    <div id="enemy-health"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="qte-prompt">准备开始...</div>
+        
+        <div id="qte-timer">
+            <div id="qte-timer-bar"></div>
+        </div>
+        
+        <div id="qte-keys">
+            <div class="key" id="key-A">A</div>
+            <div class="key" id="key-S">S</div>
+            <div class="key" id="key-D">D</div>
+            <div class="key" id="key-W">W</div>
+            <div class="key" id="key-J">J</div>
+            <div class="key" id="key-K">K</div>
+            <div class="key" id="key-L">L</div>
+        </div>
+        
+        <div id="result-message"></div>
+        
+        <button id="continue-btn">继续故事</button>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            playerHealth: 100,
+            enemyHealth: 100,
+            currentQTE: null,
+            qteActive: false,
+            timeLeft: 0,
+            timerInterval: null,
+            qteSequence: [],
+            currentQteIndex: 0,
+            score: 0,
+            difficulty: 1 // 1-3, 随着战斗进行会增加
+        };
+        
+        // 可能的QTE按键
+        const possibleKeys = ['A', 'S', 'D', 'W', 'J', 'K', 'L'];
+        
+        // DOM元素
+        const qtePrompt = document.getElementById('qte-prompt');
+        const qteTimerBar = document.getElementById('qte-timer-bar');
+        const resultMessage = document.getElementById('result-message');
+        const continueBtn = document.getElementById('continue-btn');
+        const playerHealthBar = document.getElementById('player-health');
+        const enemyHealthBar = document.getElementById('enemy-health');
+        
+        // 初始化游戏
+        function initGame() {
+            updateHealthBars();
+            startNewQTE();
+            
+            // 监听键盘事件
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // 继续按钮事件
+            continueBtn.addEventListener('click', function() {
+                // 这里可以添加继续游戏的逻辑，比如跳转到下一个场景
+                alert('战斗结束！将返回游戏主剧情...');
+                // window.location.href = 'next_scene.html';
+            });
+        }
+        
+        // 更新生命值显示
+        function updateHealthBars() {
+            playerHealthBar.style.width = `${gameState.playerHealth}%`;
+            enemyHealthBar.style.width = `${gameState.enemyHealth}%`;
+            
+            // 更新颜色基于生命值
+            playerHealthBar.style.backgroundColor = 
+                gameState.playerHealth > 50 ? '#4CAF50' :
+                gameState.playerHealth > 20 ? '#FFC107' : '#F44336';
+        }
+        
+        // 开始一个新的QTE
+        function startNewQTE() {
+            if (gameState.playerHealth <= 0 || gameState.enemyHealth <= 0) {
+                endGame();
+                return;
+            }
+            
+            // 重置状态
+            gameState.qteActive = true;
+            gameState.currentQteIndex = 0;
+            gameState.qteSequence = [];
+            
+            // 根据难度生成QTE序列 (1-3个按键)
+            const sequenceLength = Math.min(3, Math.max(1, gameState.difficulty));
+            for (let i = 0; i < sequenceLength; i++) {
+                const randomKey = possibleKeys[Math.floor(Math.random() * possibleKeys.length)];
+                gameState.qteSequence.push(randomKey);
+            }
+            
+            // 显示第一个按键提示
+            gameState.currentQTE = gameState.qteSequence[0];
+            qtePrompt.textContent = `按下 ${gameState.currentQTE} 键！`;
+            
+            // 设置计时器
+            gameState.timeLeft = 100;
+            qteTimerBar.style.width = '100%';
+            qteTimerBar.style.backgroundColor = '#4CAF50';
+            
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            gameState.timerInterval = setInterval(function() {
+                gameState.timeLeft -= 1;
+                qteTimerBar.style.width = `${gameState.timeLeft}%`;
+                
+                // 根据剩余时间改变颜色
+                if (gameState.timeLeft < 30) {
+                    qteTimerBar.style.backgroundColor = '#F44336';
+                } else if (gameState.timeLeft < 60) {
+                    qteTimerBar.style.backgroundColor = '#FFC107';
+                }
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    qteTimeout();
+                }
+            }, 100 - (gameState.difficulty * 15)); // 难度越高，时间流逝越快
+        }
+        
+        // 处理按键按下
+        function handleKeyPress(e) {
+            if (!gameState.qteActive) return;
+            
+            const pressedKey = e.key.toUpperCase();
+            const keyElement = document.getElementById(`key-${pressedKey}`);
+            
+            // 高亮显示按下的键
+            if (keyElement) {
+                keyElement.classList.add('active');
+                setTimeout(() => {
+                    keyElement.classList.remove('active');
+                }, 200);
+            }
+            
+            // 检查是否正确按键
+            if (pressedKey === gameState.currentQTE) {
+                qteSuccess();
+            } else {
+                qteFail();
+            }
+        }
+        
+        // QTE成功
+        function qteSuccess() {
+            // 增加分数
+            gameState.score += 10 * gameState.difficulty;
+            
+            // 移动到序列中的下一个按键
+            gameState.currentQteIndex++;
+            
+            if (gameState.currentQteIndex < gameState.qteSequence.length) {
+                // 还有更多按键需要按
+                gameState.currentQTE = gameState.qteSequence[gameState.currentQteIndex];
+                qtePrompt.textContent = `按下 ${gameState.currentQTE} 键！`;
+                
+                // 重置计时器为50%，给玩家一些缓冲时间
+                gameState.timeLeft = Math.max(30, gameState.timeLeft / 2);
+                qteTimerBar.style.width = `${gameState.timeLeft}%`;
+            } else {
+                // 完成整个序列
+                clearInterval(gameState.timerInterval);
+                gameState.qteActive = false;
+                
+                // 对敌人造成伤害
+                const damage = 10 + (5 * gameState.difficulty);
+                gameState.enemyHealth = Math.max(0, gameState.enemyHealth - damage);
+                updateHealthBars();
+                
+                // 显示结果
+                resultMessage.textContent = `成功攻击！对敌人造成 ${damage} 点伤害！`;
+                resultMessage.style.color = '#4CAF50';
+                
+                // 增加难度
+                if (gameState.difficulty < 3) {
+                    gameState.difficulty += 0.2;
+                }
+                
+                // 敌人反击
+                setTimeout(() => {
+                    enemyAttack();
+                }, 1500);
+            }
+        }
+        
+        // QTE失败
+        function qteFail() {
+            resultMessage.textContent = '按错了键！';
+            resultMessage.style.color = '#F44336';
+            
+            // 小惩罚：减少时间
+            gameState.timeLeft = Math.max(0, gameState.timeLeft - 15);
+            qteTimerBar.style.width = `${gameState.timeLeft}%`;
+        }
+        
+        // QTE超时
+        function qteTimeout() {
+            gameState.qteActive = false;
+            resultMessage.textContent = '太慢了！敌人抓住了机会！';
+            resultMessage.style.color = '#F44336';
+            
+            // 敌人反击
+            setTimeout(() => {
+                enemyAttack();
+            }, 1500);
+        }
+        
+        // 敌人攻击
+        function enemyAttack() {
+            // 敌人总是造成固定伤害，但难度越高伤害越大
+            const damage = 5 + (5 * gameState.difficulty);
+            gameState.playerHealth = Math.max(0, gameState.playerHealth - damage);
+            updateHealthBars();
+            
+            resultMessage.textContent = `敌人反击！你受到了 ${damage} 点伤害！`;
+            resultMessage.style.color = '#F44336';
+            
+            // 检查游戏是否结束
+            if (gameState.playerHealth <= 0) {
+                endGame();
+            } else if (gameState.enemyHealth <= 0) {
+                endGame();
+            } else {
+                // 开始新的QTE
+                setTimeout(() => {
+                    resultMessage.textContent = '';
+                    startNewQTE();
+                }, 1500);
+            }
+        }
+        
+        // 游戏结束
+        function endGame() {
+            gameState.qteActive = false;
+            clearInterval(gameState.timerInterval);
+            
+            if (gameState.playerHealth <= 0) {
+                qtePrompt.textContent = '战斗失败...';
+                resultMessage.textContent = '你被敌人击败了。村民们的命运将会如何...';
+                continueBtn.textContent = '重新尝试';
+            } else {
+                qtePrompt.textContent = '胜利！';
+                resultMessage.textContent = `你成功击退了白军士兵！村民们都安全了。得分: ${gameState.score}`;
+                continueBtn.textContent = '继续故事';
+            }
+            
+            continueBtn.style.display = 'block';
+        }
+        
+        // 初始化游戏
+        window.onload = initGame;
+    </script>
+</body>
+</html>
